@@ -1,26 +1,16 @@
-from flask import Flask, request, render_template, redirect
-# from flask_session import Session
+from flask import Flask, request, render_template, redirect, session
+import json
 
 import simulation
 
-import json
-
-
 users=json.load(open('users.bak'))
-isLoggedIn=False
-role=None
 
 app = Flask(__name__)
-# app.config["SESSION_PERMANENT"] = False
-# app.config["SESSION_TYPE"] = "filesystem"
-# Session(app)
+app.secret_key = 'BAD_SECRET_KEY'
 
 
-machines=[]
 @app.route('/', methods=['GET','POST'])
 def index():
-    global isLoggedIn
-    global role
     if request.method=='GET':
         return render_template('index.html', alert=None)
     elif request.method=='POST':
@@ -29,9 +19,9 @@ def index():
         
         for user in users:
             if user["username"]==username and user["password"]==password:
-                isLoggedIn=True
-                role=user["role"]
-                if role=="head":
+                session["isLoggedIn"]=True
+                session["role"]=user["role"]
+                if session["role"]=="head":
                     return redirect("/dashboard")
                 else:
                     return redirect("/machine")
@@ -41,11 +31,9 @@ machines=[]
 machineNames=[]
 @app.route('/machine', methods=['GET','POST'])
 def machine():
-    global isLoggedIn
-    if isLoggedIn==False:
-        return redirect("/")
     global machines
-    print(machines)
+    if session["isLoggedIn"]==False:
+        return redirect("/")
     if request.method=='GET':
         return render_template('machine.html', machines=machines)
     elif request.method=='POST':
@@ -66,11 +54,10 @@ def machine():
 adjusters=[]
 @app.route('/adjuster', methods=['GET','POST'])
 def adjuster():
-    global isLoggedIn
-    if isLoggedIn==False:
-        return redirect("/")
     global adjusters
     global machineNames
+    if session["isLoggedIn"]==False:
+        return redirect("/")
     if request.method=='GET':
         return render_template('adjuster.html', machinesNames=machineNames, adjusters=adjusters)
     elif request.method=='POST':
@@ -88,11 +75,9 @@ def adjuster():
 
 @app.route('/simulate', methods=['POST'])
 def simulate():
-    global isLoggedIn
-    if isLoggedIn==False:
+    if session["isLoggedIn"]==False:
         return redirect("/")
-    # global adjusters
-    # global machines
+
     if request.method=='POST':
         numberOfYears=int(request.form.get('numberOfYears'))
         statistics=simulation.simulate(adjusters,machines,numberOfYears)
@@ -100,51 +85,56 @@ def simulate():
 
 @app.route('/deleteadjuster', methods=['POST'])
 def deleteadjuster():
-    global isLoggedIn
-    if isLoggedIn==False:
-        return redirect("/")
     global adjusters
+    if session["isLoggedIn"]==False:
+        return redirect("/")
     if request.method=='POST':
         type=request.form.get('type')
         for adjuster in adjusters:
             if adjuster["adjusterType"]==type:
                 adjusters.remove(adjuster)
                 break
-    return redirect("/adjuster")
+    if session["role"]=="head":
+        return redirect("/dashboard")
+    else:
+        return redirect("/adjuster")
 
 @app.route('/deletemachine', methods=['POST'])
 def deletemachine():
-    global isLoggedIn
-    if isLoggedIn==False:
-        return redirect("/")
     global machines
+    if session["isLoggedIn"]==False:
+        return redirect("/")
+
     if request.method=='POST':
         name=request.form.get('name')
         for machine in machines:
             if machine["machineName"]==name:
                 machines.remove(machine)
                 break
-    return redirect("/machine")
+        for machinename in machineNames:
+            if machinename==name:
+                machineNames.remove(name)
+                break
+    if session["role"]=="head":
+        return redirect("/dashboard")
+    else:
+        return redirect("/machine")
 
 @app.route('/logout',methods=['GET'])
 def logout():
-    global isLoggedIn
-    isLoggedIn=False
-    role=None
+    session["isLoggedIn"]=False
+    session["role"]=None
     return redirect("/")
 
 @app.route('/dashboard',methods=['GET'])
 def dashboard():
-    global isLoggedIn
-    global role
-    if isLoggedIn==False:
-        return redirect("/")
-    if role!="head":
-        return redirect("/")
     global machines
     global adjusters
     global machineNames
-
+    if session["isLoggedIn"]==False:
+        return redirect("/")
+    if session["role"]!="head":
+        return redirect("/")
     flag=1
     if len(machines)>0 and len(adjusters)>0:
         flag=0
