@@ -1,17 +1,44 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect
 import simulation
+
+import json
+
+
+users=json.load(open('users.bak'))
+isLoggedIn=False
+role=None
+
 app = Flask(__name__)
 
 
 machines=[]
 @app.route('/', methods=['GET','POST'])
 def index():
-    return render_template('index.html')
+    global isLoggedIn
+    if request.method=='GET':
+        return render_template('index.html', alert=None)
+    elif request.method=='POST':
+        username=request.form.get('username')
+        password=request.form.get('password')
+        print(username,password)
+        
+        for user in users:
+            if user["username"]==username and user["password"]==password:
+                isLoggedIn=True
+                role=user["role"]
+                if role=="head":
+                    return redirect("/dashboard")
+                else:
+                    return redirect("/machine")
+        return render_template('index.html', alert="Wrong username or password")
 
 machines=[]
 machineNames=[]
 @app.route('/machine', methods=['GET','POST'])
 def machine():
+    global isLoggedIn
+    if isLoggedIn==False:
+        return redirect("/")
     global machines
     print(machines)
     if request.method=='GET':
@@ -34,6 +61,9 @@ def machine():
 adjusters=[]
 @app.route('/adjuster', methods=['GET','POST'])
 def adjuster():
+    global isLoggedIn
+    if isLoggedIn==False:
+        return redirect("/")
     global adjusters
     global machineNames
     print(adjusters)
@@ -55,9 +85,60 @@ def adjuster():
 
 @app.route('/simulate', methods=['POST'])
 def simulate():
+    global isLoggedIn
+    if isLoggedIn==False:
+        return redirect("/")
     # global adjusters
     # global machines
     if request.method=='POST':
         numberOfYears=int(request.form.get('numberOfYears'))
         statistics=simulation.simulate(adjusters,machines,numberOfYears)
         return render_template('simulation.html', statistics=statistics)
+
+@app.route('/deleteadjuster', methods=['POST'])
+def deleteadjuster():
+    global isLoggedIn
+    if isLoggedIn==False:
+        return redirect("/")
+    global adjusters
+    if request.method=='POST':
+        type=request.form.get('type')
+        for adjuster in adjusters:
+            if adjuster["adjusterType"]==type:
+                adjusters.remove(adjuster)
+                break
+    return redirect("/adjuster")
+
+@app.route('/deletemachine', methods=['POST'])
+def deletemachine():
+    global isLoggedIn
+    if isLoggedIn==False:
+        return redirect("/")
+    global machines
+    if request.method=='POST':
+        name=request.form.get('name')
+        for machine in machines:
+            if machine["machineName"]==name:
+                machines.remove(machine)
+                break
+    return redirect("/machine")
+
+@app.route('/logout',methods=['GET'])
+def logout():
+    global isLoggedIn
+    isLoggedIn=False
+    return redirect("/")
+
+@app.route('/dashboard',methods=['GET'])
+def dashboard():
+    global isLoggedIn
+    if isLoggedIn==False:
+        return redirect("/")
+    else:
+        if role!="head":
+            return redirect("/machine")
+    global machines
+    global adjusters
+    global machineNames
+
+    return render_template('dashboard.html', machinesNames=machineNames, adjusters=adjusters, machines=machines) 

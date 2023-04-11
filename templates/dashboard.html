@@ -31,10 +31,6 @@
           <a class="navbar-brand" href="#">FMSS</a>
         </div>
         <div class="collapse navbar-collapse" id="myNavbar">
-          <ul class="nav navbar-nav">
-            <li class="active"><a href="/machine">Add Machine</a></li>
-            <li><a href="/adjuster">Add Adjuster</a></li>
-          </ul>
           <ul class="nav navbar-nav navbar-right">
             <li>
               <a href="/logout"
@@ -90,53 +86,55 @@
       </table>
     </center>
     <center>
-      <form
-        class="form-inline"
-        action="/machine"
-        method="POST"
-        style="margin-top: 2%"
+      <table
+        class="table table-striped table-bordered table-hover table-sm"
+        style="width: 80%; margin-top: 5%"
       >
+        <thead>
+          <tr>
+            <th>Adjuster Type</th>
+            <th>Expertise</th>
+            <th>Number of Adjusters</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for adjuster in adjusters %}
+          <tr>
+            <td>{{ adjuster.adjusterType }}</td>
+            <td>{{ adjuster.expertise }}</td>
+            <td>{{ adjuster.numberOfAdjusters }}</td>
+            <td>
+              <form action="/deleteadjuster" method="POST">
+                <input
+                  type="hidden"
+                  name="type"
+                  value="{{ adjuster.adjusterType
+                  }}"
+                />
+                <button
+                  class="btn btn-danger btn-sm rounded-0"
+                  type="submit"
+                  data-toggle="tooltip"
+                  data-placement="top"
+                  title="Delete"
+                >
+                  <i class="fa fa-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </center>
+    <center>
+      <form class="form-inline" action="/simulate" method="POST">
         <div class="form-group">
-          <label>Machine Name:</label>
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Enter Machine Name"
-            name="machineName"
-          />
+          <label>Years:</label>
+          <input type="number" class="form-control" name="numberOfYears" />
         </div>
-        <div class="form-group">
-          <label>MTTF:</label>
-          <input
-            type="number"
-            class="form-control"
-            placeholder="Enter MTTF"
-            name="MTTF"
-          />
-        </div>
-        <div class="form-group">
-          <label>Repair Time:</label>
-          <input
-            type="number"
-            class="form-control"
-            placeholder="Enter Repair Time"
-            name="repairTime"
-          />
-        </div>
-        <div class="form-group">
-          <label>Quantity:</label>
-          <input
-            type="number"
-            class="form-control"
-            placeholder="Enter Quantity"
-            name="quantity"
-          />
-        </div>
-        <button type="submit" class="btn btn-default">Submit</button>
+        <button type="submit" class="btn btn-success">Simulation</button>
       </form>
-      <a href="/adjuster"
-        ><button type="button" class="btn btn-success">Add Adjusters</button></a
-      >
     </center>
   </body>
 </html>

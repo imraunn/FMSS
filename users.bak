@@ -1,0 +1,12 @@
+[
+    {
+        "username":"head@fmss",
+        "password":"head",
+        "role":"head"
+    },
+    {
+        "username":"manager@fmss",
+        "password":"manager",
+        "role":"manager"
+    }
+]
