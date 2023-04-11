@@ -133,7 +133,18 @@
           <label>Years:</label>
           <input type="number" class="form-control" name="numberOfYears" />
         </div>
-        <button type="submit" class="btn btn-success">Simulation</button>
+        <button
+          type="submit"
+          class="btn btn-success"
+          {%
+          if
+          show
+          %}disabled{%
+          endif
+          %}
+        >
+          Simulation
+        </button>
       </form>
     </center>
   </body>

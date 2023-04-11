@@ -1,4 +1,6 @@
 from flask import Flask, request, render_template, redirect
+# from flask_session import Session
+
 import simulation
 
 import json
@@ -9,18 +11,21 @@ isLoggedIn=False
 role=None
 
 app = Flask(__name__)
+# app.config["SESSION_PERMANENT"] = False
+# app.config["SESSION_TYPE"] = "filesystem"
+# Session(app)
 
 
 machines=[]
 @app.route('/', methods=['GET','POST'])
 def index():
     global isLoggedIn
+    global role
     if request.method=='GET':
         return render_template('index.html', alert=None)
     elif request.method=='POST':
         username=request.form.get('username')
         password=request.form.get('password')
-        print(username,password)
         
         for user in users:
             if user["username"]==username and user["password"]==password:
@@ -66,8 +71,6 @@ def adjuster():
         return redirect("/")
     global adjusters
     global machineNames
-    print(adjusters)
-    # print(machineNames)
     if request.method=='GET':
         return render_template('adjuster.html', machinesNames=machineNames, adjusters=adjusters)
     elif request.method=='POST':
@@ -127,18 +130,22 @@ def deletemachine():
 def logout():
     global isLoggedIn
     isLoggedIn=False
+    role=None
     return redirect("/")
 
 @app.route('/dashboard',methods=['GET'])
 def dashboard():
     global isLoggedIn
+    global role
     if isLoggedIn==False:
         return redirect("/")
-    else:
-        if role!="head":
-            return redirect("/machine")
+    if role!="head":
+        return redirect("/")
     global machines
     global adjusters
     global machineNames
 
-    return render_template('dashboard.html', machinesNames=machineNames, adjusters=adjusters, machines=machines) 
+    flag=1
+    if len(machines)>0 and len(adjusters)>0:
+        flag=0
+    return render_template('dashboard.html', machinesNames=machineNames, adjusters=adjusters, machines=machines, show=flag) 
