@@ -44,4 +44,3 @@ pip install -r requirements.txt
 ```bash
 flask run
 ```
-Made with love ❤️ by [Raunak Asnani](https://github.com/imraunn)
